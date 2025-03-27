@@ -6,7 +6,7 @@ public class UploadFilesResponse
     {
         NotUploadedFiles = notUploadedFiles;
         TotalFilesUploaded = totalFilesUploaded;
-        TotalFilesUploaded = TotalFilesUploaded;
+        TotalSizeUploaded = totalSizeUploaded;
     }
 
     public int TotalFilesUploaded { get; set; }

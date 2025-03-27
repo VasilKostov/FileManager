@@ -17,6 +17,8 @@ public class Program
         });
         builder.Services.AddDbContext<FileManagerDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("FileManager")));
         builder.Services.AddControllers();
+        builder.Services.AddRazorPages();
+        builder.Services.AddHttpClient();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddTransient<FileManagerQueries>();
@@ -34,7 +36,7 @@ public class Program
 
         app.UseAuthorization();
 
-
+        app.MapRazorPages();
         app.MapControllers();
 
         app.Run();

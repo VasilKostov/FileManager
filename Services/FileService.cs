@@ -11,8 +11,10 @@ namespace FileManager.Services;
 public class FileService : IFileService
 {
     private readonly FileManagerQueries _db;
-    private const double BytesInMb = 1024 * 1024; // 1 MB = 1024 * 1024 bytes
-    private const double BytesInKb = 1024;        // 1 KB = 1024 bytes
+    
+    private const double BytesInKb = 1024;
+    private const double BytesInMb = 1024 * 1024;
+    private const double BytesInGb = 1024 * 1024 * 1024;
 
     public FileService(FileManagerQueries fileManagerQueries)
     {
@@ -39,9 +41,15 @@ public class FileService : IFileService
 
         string boundary = GetBoundary(MediaTypeHeaderValue.Parse(contentType));
         MultipartReader reader = new(boundary, stream);
-        MultipartSection? section = await reader.ReadNextSectionAsync();
+        MultipartSection? section;
         List<string> notUploadedFiles = new();
         List<FileRecord> files = new();
+
+        string fileDirectory = Path.Combine("C:\\Uploads");
+        if (!Directory.Exists(fileDirectory))
+        {
+            Directory.CreateDirectory(fileDirectory);
+        }
 
         while ((section = await reader.ReadNextSectionAsync()) is not null)
         {
@@ -108,13 +116,24 @@ public class FileService : IFileService
             totalSize += memoryStream.Length;
             fileCount++;
 
+            string filePath = string.Empty;
+
+            if (memoryStream.Length >= 2 * BytesInGb)
+            {
+                filePath = Path.Combine(fileDirectory, fileSection.FileName);
+
+                using FileStream fileStream = new(filePath, FileMode.Create);
+                await memoryStream.CopyToAsync(fileStream);
+            }
+
             files.Add(new FileRecord
             {
                 Name = currName,
                 Extension = currExtention,
                 Size = memoryStream.Length,
                 UploadDate = DateTime.UtcNow,
-                FileContent = memoryStream.ToArray()
+                FileContent = filePath == string.Empty ? memoryStream.ToArray() : null,
+                FilePath = filePath
             });
         }
 

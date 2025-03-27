@@ -4,6 +4,7 @@ using FileManager.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FileManager.DB.Migrations
 {
     [DbContext(typeof(FileManagerDbContext))]
-    partial class FileManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250324212044_tests")]
+    partial class tests
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,10 +40,6 @@ namespace FileManager.DB.Migrations
 
                     b.Property<byte[]>("FileContent")
                         .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("FilePath")
-                        .HasMaxLength(254)
-                        .HasColumnType("nvarchar(254)");
 
                     b.Property<string>("Name")
                         .IsRequired()

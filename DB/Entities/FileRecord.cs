@@ -24,7 +24,9 @@ public class FileRecord
     [Required]
     public DateTime UploadDate { get; set; }
 
-    [Required]
-    public byte[] FileContent { get; set; } = [];
+    public byte[]? FileContent { get; set; }
+
+    [MaxLength(254)]
+    public string? FilePath { get; set; }
 }
 
