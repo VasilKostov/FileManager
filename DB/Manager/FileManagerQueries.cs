@@ -1,4 +1,6 @@
 ﻿using FileManager.DB.Entities;
+using FileManager.Helpers;
+using FileManager.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileManager.DB.Manager;
@@ -28,9 +30,9 @@ public class FileManagerQueries
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<FileRecord>> GetFileRecords()
+    public async Task<List<FileRecordDTO>> GetFileRecords()
     {
-        return await _context.FileRecords.ToListAsync();
+        return await _context.FileRecords.Select(x=> new FileRecordDTO(x.Name, x.Extension, Helper.GetMb(x.Size))).ToListAsync();
     }
 
     public async Task<List<string>> GetNamesAndExtentions(string name)

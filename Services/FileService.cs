@@ -1,9 +1,12 @@
 ﻿using FileManager.DB.Entities;
 using FileManager.DB.Manager;
+using FileManager.Helpers;
 using FileManager.Interfaces;
 using FileManager.Models.DTOs;
 using FileManager.Models.Responses;
+using FileManager.Utilities;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
 namespace FileManager.Services;
@@ -11,27 +14,17 @@ namespace FileManager.Services;
 public class FileService : IFileService
 {
     private readonly FileManagerQueries _db;
-    
-    private const double BytesInKb = 1024;
-    private const double BytesInMb = 1024 * 1024;
-    private const double BytesInGb = 1024 * 1024 * 1024;
+    private readonly string _uploadRootFolder;
 
-    public FileService(FileManagerQueries fileManagerQueries)
+    public FileService(FileManagerQueries fileManagerQueries, IOptions<Configuration> _cfg)
     {
         _db = fileManagerQueries;
+        _uploadRootFolder = _cfg.Value.UploadPath;
     }
 
     public async Task<List<FileRecordDTO>> GetFiles()
     {
-        List<FileRecord> files = await _db.GetFileRecords();
-        List<FileRecordDTO> result = new();
-
-        foreach (FileRecord file in files)
-        {
-            result.Add(new(file.Name, file.Extension, GetMb(file.Size)));
-        }
-
-        return result;
+        return await _db.GetFileRecords();
     }
 
     public async Task<UploadFilesResponse> UploadFiles(Stream stream, string contentType)
@@ -44,12 +37,6 @@ public class FileService : IFileService
         MultipartSection? section;
         List<string> notUploadedFiles = new();
         List<FileRecord> files = new();
-
-        string fileDirectory = Path.Combine("C:\\Uploads");
-        if (!Directory.Exists(fileDirectory))
-        {
-            Directory.CreateDirectory(fileDirectory);
-        }
 
         while ((section = await reader.ReadNextSectionAsync()) is not null)
         {
@@ -118,11 +105,14 @@ public class FileService : IFileService
 
             string filePath = string.Empty;
 
-            if (memoryStream.Length >= 2 * BytesInGb)
+            if (memoryStream.Length >= 2 * Helper.BytesInGb)
             {
-                filePath = Path.Combine(fileDirectory, fileSection.FileName);
+                filePath = Path.Combine(_uploadRootFolder, fileSection.FileName);
 
                 using FileStream fileStream = new(filePath, FileMode.Create);
+
+                memoryStream.Position = 0;
+
                 await memoryStream.CopyToAsync(fileStream);
             }
 
@@ -137,9 +127,14 @@ public class FileService : IFileService
             });
         }
 
-        await _db.InsertFileRecords(files);
+        int batchSize = 50;
+        for (int i = 0; i < files.Count; i += batchSize)
+        {
+            List<FileRecord> batch = files.Skip(i).Take(batchSize).ToList();
+            await _db.InsertFileRecords(batch);
+        }
 
-        return new UploadFilesResponse(fileCount, GetMb(totalSize), notUploadedFiles);
+        return new UploadFilesResponse(fileCount, Helper.GetMb(totalSize), notUploadedFiles);
     }
 
     private string GetBoundary(MediaTypeHeaderValue mediaTypeHeaderValue)
@@ -152,21 +147,5 @@ public class FileService : IFileService
         }
 
         return boundary;
-    }
-
-    private string GetMb(long size)
-    {
-        if (size < BytesInMb)
-        {
-            double sizeInKb = size / BytesInKb;
-
-            return $"{sizeInKb:F2} KB";
-        }
-        else
-        {
-            double sizeInMb = size / BytesInMb;
-
-            return $"{sizeInMb:F2} MB";
-        }
     }
 }

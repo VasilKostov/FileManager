@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload</title>
+</head>
+<body>
+    <h2>File Upload</h2>
+    <input type="file" id="fileInput" multiple />
+    <button id="uploadBtn" onclick="uploadFiles()">Upload</button>
+    <span id="uploadStatus"></span>
+
+    <div id="responseMessage"></div>
+
+    <h3>Uploaded Files</h3>
+    <ul id="fileList"></ul>
+
+    <script>
+        const apiBaseUrl = "https://localhost:7105/api/file";
+
+        async function getAllFiles() {
+            try {
+                const response = await fetch(`${apiBaseUrl}/get-files`);
+                if (response.ok) {
+                    const files = await response.json();
+                    displayFiles(files);
+                } else {
+                    console.error("Failed to fetch files.");
+                }
+            } catch (error) {
+                console.error("Error fetching files:", error);
+            }
+        }
+
+        function displayFiles(files) {
+            const fileList = document.getElementById("fileList");
+            fileList.innerHTML = "";
+            files.forEach(file => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `${file.name} (${file.extension}) with size: ${file.size}`;
+                fileList.appendChild(listItem);
+            });
+        }
+
+        async function uploadFiles() {
+            const fileInput = document.getElementById("fileInput");
+            const uploadBtn = document.getElementById("uploadBtn");
+            const statusText = document.getElementById("uploadStatus");
+
+            if (!fileInput.files.length) {
+                alert("Please select at least one file to upload.");
+                return;
+            }
+
+            // Disable the button and show status
+            uploadBtn.disabled = true;
+            statusText.innerText = "Uploading...";
+
+            const formData = new FormData();
+            for (const file of fileInput.files) {
+                formData.append("files", file);
+            }
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/upload`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("responseMessage").innerHTML = `
+                <div>
+                    ✅ <strong>${data.totalFilesUploaded}</strong> file(s) uploaded successfully.<br>
+                    📦 <strong>Total size:</strong> ${data.totalSizeUploaded}<br>
+                    ${data.notUploadedFiles.length > 0 ? `<strong>❌ Failed to upload:</strong> ${data.notUploadedFiles.join(", ")}` : ""}
+                </div>`;
+
+                    fileInput.value = "";
+                    getAllFiles();
+                } else {
+                    document.getElementById("responseMessage").innerText = "❌ Upload failed.";
+                }
+            } catch (error) {
+                console.error("Error during upload:", error);
+                document.getElementById("responseMessage").innerText = "⚠️ Error during upload.";
+            } finally {
+                // Re-enable the button and clear status
+                uploadBtn.disabled = false;
+                statusText.innerText = "";
+            }
+        }
+
+        window.onload = getAllFiles;
+    </script>
+</body>
+</html>
