@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>File Upload</title>
+    <title>File Upload and Deletion</title>
 </head>
 <body>
-    <h2>File Upload</h2>
+    <h2>File Upload and Deletion</h2>
     <input type="file" id="fileInput" multiple />
     <button id="uploadBtn" onclick="uploadFiles()">Upload</button>
     <span id="uploadStatus"></span>
@@ -39,6 +39,12 @@
             files.forEach(file => {
                 const listItem = document.createElement("li");
                 listItem.textContent = `${file.name} (${file.extension}) with size: ${file.size}`;
+
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.onclick = () => deleteFile(file.id);
+                listItem.appendChild(deleteButton);
+
                 fileList.appendChild(listItem);
             });
         }
@@ -53,7 +59,6 @@
                 return;
             }
 
-            // Disable the button and show status
             uploadBtn.disabled = true;
             statusText.innerText = "Uploading...";
 
@@ -71,11 +76,11 @@
                 if (response.ok) {
                     const data = await response.json();
                     document.getElementById("responseMessage").innerHTML = `
-                <div>
-                    ✅ <strong>${data.totalFilesUploaded}</strong> file(s) uploaded successfully.<br>
-                    📦 <strong>Total size:</strong> ${data.totalSizeUploaded}<br>
-                    ${data.notUploadedFiles.length > 0 ? `<strong>❌ Failed to upload:</strong> ${data.notUploadedFiles.join(", ")}` : ""}
-                </div>`;
+                    <div>
+                        ✅ <strong>${data.totalFilesUploaded}</strong> file(s) uploaded successfully.<br>
+                        📦 <strong>Total size:</strong> ${data.totalSizeUploaded}<br>
+                        ${data.notUploadedFiles.length > 0 ? `<strong>❌ Failed to upload:</strong> ${data.notUploadedFiles.join(", ")}` : ""}
+                    </div>`;
 
                     fileInput.value = "";
                     getAllFiles();
@@ -86,9 +91,27 @@
                 console.error("Error during upload:", error);
                 document.getElementById("responseMessage").innerText = "⚠️ Error during upload.";
             } finally {
-                // Re-enable the button and clear status
                 uploadBtn.disabled = false;
                 statusText.innerText = "";
+            }
+        }
+
+        async function deleteFile(id) {
+            try {
+                const response = await fetch(`${apiBaseUrl}/delete?id=${id}`, {
+                    method: "DELETE",
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    getAllFiles();
+                } else {
+                    const errorText = await response.text();
+                    alert(`Failed to delete the file. Error: ${errorText}`);
+                }
+            } catch (error) {
+                console.error("Error during delete:", error);
+                alert("Error during deletion.");
             }
         }
 

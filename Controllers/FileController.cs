@@ -37,4 +37,25 @@ public class FileController : ControllerBase
 
         return Ok(files);
     }
+
+    [HttpDelete("delete")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteFile([FromQuery] int id)
+    {
+        if (id < 0)
+        {
+            return BadRequest("Invalid file ID.");
+        }
+
+        bool deleted = await _fileService.DeleteFile(id);
+        if (deleted)
+        {
+            return Ok(new { Message = "File deleted successfully." });
+        }
+
+        return NotFound("File not found.");
+    }
+
 }

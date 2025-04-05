@@ -137,6 +137,11 @@ public class FileService : IFileService
         return new UploadFilesResponse(fileCount, Helper.GetMb(totalSize), notUploadedFiles);
     }
 
+    public async Task<bool> DeleteFile(int id)
+    {
+        return await _db.DeleteFileRecord(id);
+    }
+
     private string GetBoundary(MediaTypeHeaderValue mediaTypeHeaderValue)
     {
         string? boundary = HeaderUtilities.RemoveQuotes(mediaTypeHeaderValue.Boundary).Value;
