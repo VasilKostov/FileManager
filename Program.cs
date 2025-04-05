@@ -42,7 +42,7 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-
+        app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
         app.UseHttpsRedirection();
         app.UseStaticFiles();
         app.UseAuthorization();
