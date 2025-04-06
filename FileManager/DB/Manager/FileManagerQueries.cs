@@ -45,13 +45,14 @@ public class FileManagerQueries
             File.Delete(res.FilePath);
         }
 
-        FileRecord fileRecord = new() { Id = id };
+        var fileRecord = await _context.FileRecords.FindAsync(id);
+        if (fileRecord is not null)
+        {
+            _context.FileRecords.Remove(fileRecord);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
-        _context.FileRecords.Attach(fileRecord);
-        _context.FileRecords.Remove(fileRecord);
-
-        await _context.SaveChangesAsync();
-
-        return true;
+        return false;
     }
 }

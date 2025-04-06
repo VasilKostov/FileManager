@@ -16,10 +16,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            // Remove existing IFileService if registered
             services.RemoveAll(typeof(IFileService));
-
-            // Add mocked IFileService
             services.AddSingleton(FileServiceMock.Object);
         });
     }
