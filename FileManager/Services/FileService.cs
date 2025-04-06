@@ -105,7 +105,7 @@ public class FileService : IFileService
 
             string filePath = string.Empty;
 
-            if (memoryStream.Length >= 2 * Helper.BytesInGb)
+            if (memoryStream.Length >= 50 * Helper.BytesInMb)
             {
                 filePath = Path.Combine(_uploadRootFolder, fileSection.FileName);
 
